@@ -14,11 +14,11 @@ Git Repository for project files
 
 - Compile java files in edu/cs300 packages
 
-`javac edu/cs300/*java`
+`mvn package`
 
 - Create header file for System V C message functions
 
-`javac -h . edu/cs300/MessageJNI.java`
+`javac -cp src/ -h . src/edu/cs300/MessageJNI.java`
 
 - Compile C native functions into a library for use with MessageJNI
 
@@ -29,32 +29,35 @@ Git Repository for project files
 
 - Compile test send and receive functions
 
-`gcc -std=c99 -D_GNU_SOURCE msgsnd_atbat.c -o msgsnd`
+`gcc -std=c99 -D_GNU_SOURCE msgsnd_meeting_request.c -o msgsnd`
 
-`gcc -std=c99 -D_GNU_SOURCE msgrcv_stats.c -o msgrcv`
+`gcc -std=c99 -D_GNU_SOURCE msgrcv_meeting_response.c -o msgrcv`
 
 
 ## Commands to run sample programs
 
 - Create a test atbat message and puts it on the queue
 
-`./msgsnd`
+`./msgsnd 0 "6789" "command line mtg" "online" "2022-12-17T14:30" 60`
 
 ```
-msgget: msgget succeeded: msgqid = 262144
-msgsnd-atbat: player id"#16" Sent (13 bytes)
+msgget: msgget succeeded: msgqid = 524288
+msgsnd--mtg_req: reqid 0 empid 6789 descr command line mtg loc online date 2022-12-17T14:30 duration 60
 ```
 
 - Java program reads queue contents using native C function and creates and sends a response message via the System V msg queue
 
-`java -cp . -Djava.library.path=. edu.cs300.MessageJNI`
+`java -cp ./target/classes  -Djava.library.path=. edu/cs300/MessageJNI`
 
 ```
 Running MessageJNI test routine
-JNI msgrcv-atbat: Player #16 pitch results=BKBKFFBO ret bytes rcv'd 13
-16:BKBKFFBO
-msgget: msgget succeeded: msgqid = 262144
-JNI msgsnd-stats: Record 1 of 1: Bailey Hemphill(#16) strikeouts=1, walks=3, singles=1, doubles=0, triples=0, home runs=3, game avg=0.500000, overall avg=0.250000 successfully sent
+msgget: msgget succeeded: msgqid = 524288
+ successfully sent
+JNI msgsnd-mtgReqResponse: request id 1  avail 0:
+msgget: msgget succeeded: msgqid = 524288
+size 104
+JNI msgrcv-mtg_req: msgid 2 reqid 0 empid 6789 descr command line mtg loc online date 2022-12-17T14:30 duration 60 ret bytes rcv'd 104
+MeetingRequest [request_id=0, empId=6789, description=command line mtg, location=online, datetime=2022-12-17T14:30, duration=60]
 ```
 
 - Retrieves message from System V queue and prints it
@@ -62,21 +65,52 @@ JNI msgsnd-stats: Record 1 of 1: Bailey Hemphill(#16) strikeouts=1, walks=3, sin
 `./msgrcv`
 
 ```
-msgget: msgget succeeded: msgqid = 262144
-msgrcv-stats: msg type-2, Player stats 1 of 1 for Bailey Hemphill(#16) strikeouts=1, walks=3, singles=1, doubles=0, triples=0, home runs=3, game avg=0.500000 overall avg=0.250000 ret/bytes rcv'd=96
+msgget: msgget succeeded: msgqid = 524288
+msgrcv-mtgReqResponse: request id 1  avail 0:
 ```
 
-- Program to illustrate use of Java threading and BlockingArrayQUEUE
+- Program to illustrate use of Java threading and BlockingArrayQueue
 
-`java edu.cs300.PlayerStatsTracker`
+Window 1
 
+`% ./msgsnd 0 "1234" "command line mtg" "online" "2022-12-17T14:30" 60`
+```
+msgget: msgget succeeded: msgqid = 524288
+msgsnd--mtg_req: reqid 0 empid 1234 descr command line mtg loc online date 2022-12-17T14:30 duration 60
+```
 
+`% ./msgrcv`
+```
+msgget: msgget succeeded: msgqid = 524288
+msgrcv-mtgReqResponse: request id 0  avail 1:
+```
+
+Window 2
+
+`java -cp ./target/classes  -Djava.library.path=. edu/cs300/CalendarManager`
+
+```
+msgget: msgget succeeded: msgqid = 524288
+size 104
+Worker.run():19  Thread (4567) thread started ...
+CalendarManager$OutputQueueProcessor.run():46 Thread-2 processing responses
+Worker.run():19  Thread (1234) thread started ...
+JNI msgrcv-mtg_req: msgid 2 reqid 0 empid 1234 descr command line mtg loc online date 2022-12-17T14:30 duration 60 ret bytes rcv'd 104
+CalendarManager$InputQueueProcessor.run():75 Thread-3recvd msg from queue for 1234
+CalendarManager$InputQueueProcessor.run():78 Thread-3 pushing req MeetingRequest [request_id=0, empId=1234, description=command line mtg, location=online, datetime=2022-12-17T14:30, duration=60] to 1234
+msgget: msgget succeeded: msgqid = 524288
+size 104
+Worker.run():22 Worker-1234 MeetingRequest [request_id=0, empId=1234, description=command line mtg, location=online, datetime=2022-12-17T14:30, duration=60] pushing response 0
+msgget: msgget succeeded: msgqid = 524288
+ successfully sent
+JNI msgsnd-mtgReqResponse: request id 0  avail 1:
+```
 
 ## Verify the message queue setup
 
 ```
 > cat ./queue_ids.h 
-#define CRIMSON_ID "/home/anderson/anderson"
+#define FILE_IN_HOME_DIR "/home/anderson/anderson"
 #define QUEUE_NUMBER 20 //day of birth
 > ls -lt  /home/anderson/anderson
 -rw-r--r-- 1 anderson users 9 Feb 26  2020 /home/anderson/anderson
