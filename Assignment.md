@@ -4,7 +4,7 @@
 
 **Due Date: Friday Nov 4 @ 12pm**
 
-**Project files: https://github.com/monicadelaine/f22\_os\_project**
+**Project files: https://github.com/monicadelaine/f22_os_project**
 
 **Overview**
 
@@ -31,19 +31,18 @@ request\_mtgs requirements
 
 **Format:**./message\_request\_processor
 
+```
 anderson@cs-operatingsystems01.ua.edu ~% cat input
-
 1,"1234","morning mtg","conf room",2022-12-17T14:30,60
-
 2,"1234","conflict mtg","zoom",2022-12-17T15:00,60
-
 0,"any","any","any",any,60
+```
 
+```
 anderson@cs-operatingsystems01.ua.edu ~% ./request\_mtgs \< input
-
 Meeting request 1 for employee 1234 was accepted (morning mtg @ conf room starting 2022-12-17T14:30 for 60 minutes
-
 Meeting request 2 for employee 1234 was rejected due to conflict (conflict mtg @ zoom starting 2022-12-17T15:00 for 60 minutes
+```
 
 **CalendarManager logic**
 
@@ -64,7 +63,9 @@ The incoming meeting request thread and the outgoing meeting response thread are
 
 **Format:** java -cp . -Djava.library.path=. edu.cs300.CalandarManager
 
+```
 anderson@cs-operatingsystems01.ua.edu: java -cp . -Djava.library.path=. edu.cs300.CalandarManager
+```
 
 **CalendarManager** requirements
 
@@ -84,47 +85,45 @@ anderson@cs-operatingsystems01.ua.edu: java -cp . -Djava.library.path=. edu.cs30
 
 event.dat
 
+```
 1,6789,"Weekly status mtg","conference room",2022-12-17T14:30,60
-
 2,1234,"Christmas lunch","Chuck's Fish",2022-12-24T11:30,60
+```
 
 employees.csv
 
+```
 1234,1234.dat,John Doe
-
 4567,4567.dat,Jane Doe
-
 6789,6789.dat,Joe Doe
+```
 
 1234.dat
 
+```
 "staff meeting","conference room",2022-12-20T15:30,60
-
 "status meeting","conference room",2022-12-20T11:30,30
-
 "team lunch","Chipotle",2022-12-21T11:30,90
-
 "doctor appointment","UMC",2022-12-19T15:30,45
+```
 
 1234.dat.bak
 
+```
 "morning mtg"," conf room ",2022-12-17T14:30,60
-
 "doctor appointment","UMC",2022-12-19T15:30,45
-
 "status meeting","conference room",2022-12-20T11:30,30
-
 "staff meeting","conference room",2022-12-20T15:30,60
-
 "team lunch","Chipotle",2022-12-21T11:30,90
+```
 
-Input piped to stdin to message\_report\_processor
+Input piped to stdin to request_mtgs
 
+```
 1,"1234","morning mtg","conf room",2022-12-17T14:30,60
-
 1,"1234","conflict mtg","zoom",2022-12-17T15:00,60
-
 0,"any","any","any",any,60
+```
 
 **Additional project code specifications**
 
@@ -143,6 +142,7 @@ Input piped to stdin to message\_report\_processor
 
 .
 
+```
 ├── \_employees.csv
 
 ├── \_1234.dat
@@ -190,6 +190,8 @@ Input piped to stdin to message\_report\_processor
 └── \_makefile //update make file if needed with extra \*.c or \*.h in root or \*java in edu/cs300
 
 └── \_README.md
+```
+
 
 **meeting\_request\_formats.h notes**
 

@@ -1,12 +1,12 @@
-# Spring21_cs300_project
+# Fall22\_cs300\_project
 
-Distributed Softball Statistics Tracker
-You will complete a multithreaded two process system that communicates via System V message queues.  The system goal is to collect game time statistics, calculate player statistics that include previous results in a file and print out game performance include a comparison of the overall and game batting average.
+You will complete a multithreaded two process system that communicates via System V message queues. The system goal is that meeting requests received by the **request\_mtgs** program are sent to the java program **CalendarManager** via the System 5 queue. The **CalendarManager** loads each employee's calendars at the start of the program, updates calendars with meetings that can be accommodated, sends back conflict/added responses to **request\_mtgs** program and backs up each employee's calendar when the program exits.
 
 Git Repository for project files
 
 ## All commands and code have been tested on cs-operatingsystems01.ua.edu
 
+`make` should make all files.  mvn package will build the java files
 
 - Set up JAVA_HOME environment variable
 
@@ -38,11 +38,11 @@ Git Repository for project files
 
 - Create a test atbat message and puts it on the queue
 
-`./msgsnd 0 "6789" "command line mtg" "online" "2022-12-17T14:30" 60`
+`./msgsnd 1 "6789" "command line mtg" "online" "2022-12-17T14:30" 60`
 
 ```
 msgget: msgget succeeded: msgqid = 524288
-msgsnd--mtg_req: reqid 0 empid 6789 descr command line mtg loc online date 2022-12-17T14:30 duration 60
+msgsnd--mtg_req: reqid 1 empid 6789 descr command line mtg loc online date 2022-12-17T14:30 duration 60
 ```
 
 - Java program reads queue contents using native C function and creates and sends a response message via the System V msg queue
@@ -69,9 +69,10 @@ msgget: msgget succeeded: msgqid = 524288
 msgrcv-mtgReqResponse: request id 1  avail 0:
 ```
 
-- Program to illustrate use of Java threading and BlockingArrayQueue
+- Program to illustrate use of Java threading and BlockingArrayQueue 
+Run in two windows
 
-Window 1
+Window 1 - send and receive messages from C program
 
 `% ./msgsnd 0 "1234" "command line mtg" "online" "2022-12-17T14:30" 60`
 ```
@@ -85,7 +86,7 @@ msgget: msgget succeeded: msgqid = 524288
 msgrcv-mtgReqResponse: request id 0  avail 1:
 ```
 
-Window 2
+Window 2 Use threaded java program
 
 `java -cp ./target/classes  -Djava.library.path=. edu/cs300/CalendarManager`
 
