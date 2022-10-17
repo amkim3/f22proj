@@ -8,13 +8,13 @@
 
 **Overview**
 
-You will complete a multithreaded two process system that communicates via System V message queues. The system goal is that meeting requests received by the **request\_mtgs** program are sent to the java program **CalendarManager** via the System 5 queue. The **CalendarManager** loads each employee's calendars at the start of the program, updates calendars with meetings that can be accommodated, sends back conflict/added responses to **request\_mtgs** program and backs up each employee's calendar when the program exits.
+You will complete a multithreaded two process system that communicates via System V message queues. The system goal is that meeting requests received by the ***request\_mtgs*** program are sent to the java program ***CalendarManager*** via the System 5 queue. The ***CalendarManager*** loads each employee's calendars at the start of the program, updates calendars with meetings that can be accommodated, sends back conflict/added responses to ***request\_mtgs*** program and backs up each employee's calendar when the program exits.
 
 **request\_mtgs Logic**
 
-request\_mtgs reads meeting requests from stdin for employees. Each request is checked against an employee's existing schedule for conflicts by sending the request to the CalendarManager program via the System V queue. The CalendarManager will respond with a message that indicates whether the meeting was added to the calendar by indicating availability (availability of 0 means conflict, availability of 1 means added). The request\_mtgs will print out the result (conflict or added) of each meeting request.
+***request\_mtgs*** reads meeting requests from stdin for employees. Each request is checked against an employee's existing schedule for conflicts by sending the request to the ***CalendarManager*** program via the System V queue. The ***CalendarManager*** will respond with a message that indicates whether the meeting was added to the calendar by indicating availability (availability of 0 means conflict, availability of 1 means added). The ***request\_mtgs*** will print out the result (conflict or added) of each meeting request.
 
-request\_mtgs requirements
+**request\_mtgs requirements**
 
 - Must be written in C. Source file containing main function is request\_mtgs.c. Any additional source files must be compiled and linked in the makefile
 - Format for incoming meeting requests includes the following fields. The header file provides length constraints.
@@ -22,7 +22,7 @@ request\_mtgs requirements
   - Employee id: string
   - Meeting description: quote delimited string
   - Meeting location: quote delimited string
-  - Meeting date/time: date formatted as string; Assume single time zone and 24-hour time; Ex: 2007-12-03T10:15:30.
+  - Meeting date/time: date formatted as string; Assume single time zone and 24-hour time; Ex: ***2007-12-03T10:15:30***.
   - Meeting duration: integer in minutes
 - Must create a thread to send each request, receive its response and print the result. Make sure to release all dynamically allocated memory.
 - Must send and receive data via System V message queues using the predefined message formats
@@ -46,22 +46,22 @@ Meeting request 2 for employee 1234 was rejected due to conflict (conflict mtg @
 
 **CalendarManager logic**
 
-The **CalendarManager** be responsible for maintaining the current calendar. Each employee's initial calendar will be loaded from a file. The CalendarManager will check each meeting request against an employees' existing calendar. A response message will be sent back via the System V queue with the request ID and the availability (1 if added, 0 if a conflict). When the CalendarManager receives a request with a request\_id of 0, the CalendarManager will backup each employee's calendar file, and complete all of the threads.
+The ***CalendarManager*** be responsible for maintaining the current calendar. Each employee's initial calendar will be loaded from a file. The ***CalendarManager*** will check each meeting request against an employees' existing calendar. A response message will be sent back via the System V queue with the request ID and the availability (1 if added, 0 if a conflict). When the ***CalendarManager*** receives a request with a request\_id of 0, the ***CalendarManager*** will backup each employee's calendar file, and complete all of the threads.
 
-The CalendarManager will create the following threads:
+The ***CalendarManager*** will create the following threads:
 
 1. A Worker thread will be created for each employee that
   1. Reads the existing calendar from a file (denoted in the employees.csv) concurrently. Each line represents an accepted meeting,
   2. Reads a queue to receive meeting requests from the incoming meeting request thread
   3. Processes meeting requests concurrently via a queue,
   4. Pushes meeting responses to an outgoing meeting response thread (a meeting conflicts if it overlaps another meeting),
-  5. Backs up the current calendar file and exists when the terminate message (request\_id==0) is received
-2. An **incoming meeting request** thread that reads the meeting requests from the System V queue and pushes messages to concurrent retrieves each meeting request from the System V ipc queue using a Java Native Call and sends the requests to the appropriate worker for each employee. This thread exits when all requests have been processed
-3. An outgoing meeting response thread that retrieves every response message (from all Workers) and sends it to the request\_mtgs via the System V queue. This thread exits once all responses have been processed
+  5. Backs up the current calendar file and exists when the terminate message (`request\_id==0`) is received
+2. An ***incoming meeting request*** thread that reads the meeting requests from the System V queue and pushes messages to concurrent retrieves each meeting request from the System V ipc queue using a Java Native Call and sends the requests to the appropriate worker for each employee. This thread exits when all requests have been processed
+3. An ***outgoing meeting response thread*** that retrieves every response message (from all Workers) and sends it to the ***request\_mtgs*** via the System V queue. This thread exits once all responses have been processed
 
 The incoming meeting request thread and the outgoing meeting response thread are the only threads to access the System V queue, avoiding any synchronization issues with the Java Native Interface.
 
-**Format:** java -cp . -Djava.library.path=. edu.cs300.CalandarManager
+**Format:** `java -cp . -Djava.library.path=. edu.cs300.CalandarManager`
 
 ```
 anderson@cs-operatingsystems01.ua.edu: java -cp . -Djava.library.path=. edu.cs300.CalandarManager
@@ -69,17 +69,16 @@ anderson@cs-operatingsystems01.ua.edu: java -cp . -Djava.library.path=. edu.cs30
 
 **CalendarManager** requirements
 
-- Written in Java with the main function in edu.cs300.CalendarManager.java
-- Read employee information from employees.csv in java root directory (hardcode the name-"employees.csv" with no path)
+- Written in Java with the main function in `edu.cs300.CalendarManager.java`
+- Read employee information from `employees.csv` in java root directory (hardcode the name-`employees.csv` with no path)
 - Read contents of each employee's calendar file in the root directory (see sample files)
-  - Comma delimited record format employee\_id,calendar\_filename,employee name
-  - When calendarManager exits, backup the contents of each employee's calendar file to the calendar filename+".bak". Contents should be sorted in event start order. Overwrite any previous backup file
+  - Comma delimited record format: `employee\_id,calendar\_filename,employee name`
+  - When ***CalendarManager*** exits, backup the contents of each employee's calendar file to the calendar filename+".bak". Contents should be sorted in event start order. Overwrite any previous backup file
 
-- All employees that receive meeting requests messages will have a record in employees.csv. The calendar file (via the name in the employees.csv) will exist but may be empty
+- All employees that receive meeting requests messages will have a record in employees.csv. The calendar file (via the name in the `employees.csv`) will exist but may be empty
 - Requests for one employee should process concurrently with the requests from other employees and should write the backup files concurrently
-- Add appropriate synchronization
-- A single thread should be used to call MessageJNI.writeMtgReqResponse methods to send messages back to the request\_mtgs (see OutputQueueProcessor)
-- A single thread should be used to retrieve messages using the MessageJNI._readMeetingRequest_ (see InputQueueProcessor)
+- A single thread should be used to call `MessageJNI.writeMtgReqResponse` methods to send messages back to the ***request\_mtgs*** (see OutputQueueProcessor class in `CalendarManager.java`)
+- A single thread should be used to retrieve messages using the MessageJNI._readMeetingRequest_ (see InputQueueProcessor class in `CalendarManager.java`)
 
 **Sample data files:**
 
@@ -132,106 +131,104 @@ Input piped to stdin to request_mtgs
 - You must place and implement functionality as described in the description. Programs that do not follow the guidelines will receive a zero.
 - The System V message queue requires an existing file and integer to create a unique queue name. You should create a file using your crimson id in your home directory. Use queue\_ids.h header file to create a constant string that holds the path to the queue and a constant integer to hold the day of your birthday. Use FILE\_IN\_HOME\_DIR and QUEUE\_NUMBER in the ftok command to generate the identifier
 
-(see https://github.com/monicadelaine/f22\_os\_project/blob/master/msgsnd\_mtg\_request.c for an example)
-
-#define FILE\_IN\_HOME\_DIR"/home/anderson/anderson"
-
-#define QUEUE\_NUMBER 12 //day of birth
-
-- Place files in the directory structure below (matches sample github). Turn in a zip or tar file named files.tar, files.tar.gzor files.zip that contains only the edu/cs300 directory. All other files are in the root. The project will be tested via a script. Not following this format breaks the script and will cause your project test to fail.
-
-.
+(see https://github.com/monicadelaine/f22_os_project/blob/master/msgsnd_mtg_request.c for an example)
 
 ```
-├── \_employees.csv
+#define FILE\_IN\_HOME\_DIR"/home/anderson/anderson"
+#define QUEUE\_NUMBER 12 //day of birth
+```
 
-├── \_1234.dat
+- Place files in the directory structure below (matches sample github). Turn in a zip or tar file named files.tar, files.tar.gz or files.zip that contains only the edu/cs300 directory. All other files are in the root. The project will be tested via a script. Not following this format breaks the script and will cause your project test to fail.
 
-├── \_5678.dat
+![](/images/project_folder.png)
 
-├── \_edu\_cs300\_MessageJNI.h
+```
+├── _employees.csv
 
-├── \_queue\_ids.h
+├── _1234.dat
 
-├── \_meeting\_request\_formats.h
+├── _5678.dat
 
-├── \_request\_mtgs.c
+├── _edu_cs300_MessageJNI.h
 
-├── \_system5\_msg.c
+├── _queue_ids.h
 
-├── \_msgrcv\_mtg\_response.c
+├── _meeting_request_formats.h
 
-├── \_msgsnd\_mtg\_request.c
+├── _request_mtgs.c
 
-├── \_\<Additional supporting C files\>.c
+├── _system5_msg.c
 
-├── \_\<Additional supporting header files\>.h
+├── _msgrcv_mtg_response.c
 
-├── \_src
+├── _msgsnd_mtg_request.c
+
+├── _<Additional supporting C files>.c
+
+├── _<Additional supporting header files>.h
+
+├── _src
 
 | └── edu
 
-|. └── cs300
+|  └── cs300
 
-| └── MeetingRequest.java
+|    └── MeetingRequest.java
 
-| └── MeetingResponse.java
+|    └── MeetingResponse.java
 
-| └── MessageJNI.java
+|    └── MessageJNI.java
 
-| └── CalendarManager.java
+|    └── CalendarManager.java
 
-| └── Worker.java
+|    └── Worker.java
 
-| └── DebugLog.java
+|    └── DebugLog.java
 
-| └── \<Additional Supporting Java Source\>.java
+|    └── <Additional Supporting Java Source>.java
 
-└── \_makefile //update make file if needed with extra \*.c or \*.h in root or \*java in edu/cs300
+|── _makefile //update make file if needed with extra *.c or *.h in root or *java in edu/cs300
 
-└── \_README.md
+└── _README.md
 ```
 
 
 **meeting\_request\_formats.h notes**
 
-#defineDESCRIPTION\_MAX\_LENGTH30
+```
+#define DESCRIPTION_MAX_LENGTH    30
+#define LOCATION_MAX_LENGTH       30
+#define EMP_ID_MAX_LENGTH         10
+#define DESCRIPTION_FIELD_LENGTH  DESCRIPTION_MAX_LENGTH+1
+#define LOCATION_FIELD_LENGTH     LOCATION_MAX_LENGTH+1
+#define EMP_ID_FIELD_LENGTH       EMP_ID_MAX_LENGTH+1
+```
 
-#defineLOCATION\_MAX\_LENGTH30
+**Sending meeting request from ./msgsnd to JNI**
 
-#defineEMP\_ID\_MAX\_LENGTH10
-
-#defineDESCRIPTION\_FIELD\_LENGTHDESCRIPTION\_MAX\_LENGTH+1
-
-#defineLOCATION\_FIELD\_LENGTHLOCATION\_MAX\_LENGTH+1
-
-#defineEMP\_ID\_FIELD\_LENGTHEMP\_ID\_MAX\_LENGTH+1
-
-\*\* Sending meeting request from ./msgsnd to JNI
-
-- Message struct for sending in msgsnd\_mtg\_request.c:47and received in system5msg.c:115 called from called from java\_edu\_cs300\_MessageJNI.readMeetingRequest
-- Type should be set 2 for sending msgsnd\_mtg\_request.c:66
-- Receive message of type 2 using msgrcv(msqid, &rbuf, SEND\_BUFFER\_LENGTH
-- , **2** , 0)in system5msg.c:143
+- Message struct for sending in `msgsnd\_mtg\_request.c:47` and received in `system5msg.c:115` called from called from `java\_edu\_cs300\_MessageJNI.readMeetingRequest`
+- Type should be set ***2*** for sending `msgsnd\_mtg\_request.c:66`
+- Receive message of type ***2*** using `msgrcv(msqid, &rbuf, SEND\_BUFFER\_LENGTH
+- , ***2*** , 0)` in `system5msg.c:143`
 - Record length determined by message\_request\_buf size (see calculation of SEND\_BUFFER\_LENGTH)
 
-![](RackMultipart20221017-1-nh7glv_html_d071b687d132cd0f.png)
+![](/images/mtg_req_buf.png)
 
-\*\* Sending meeting response from JNI to ./msgrcv
+**Sending meeting response from JNI to ./msgrcv**
 
-- Message struct for sending in system5\_msg.c:59 called from java edu/cs300/MessageJNI.writeMeetingResponse() and receiving in msgrcv\_mtg\_response.c:16
-- Type should be set 1 for sending at system5\_msg.c:82
-- Receive message of type 1 using msgrcv(msqid, &rbuf, length, 1, 0) in msgrcv\_mtg\_response.c:37
+- Message struct for sending in `system5\_msg.c:59` called from java `edu/cs300/MessageJNI.writeMeetingResponse()` and receiving in `msgrcv\_mtg\_response.c:16`
+- Type should be set ***1*** for sending at `system5\_msg.c:82`
+- Receive message of type ***1*** using `msgrcv(msqid, &rbuf, length, ***1***, 0)` in `msgrcv\_mtg\_response.c:37`
 - Record length: 2 \* sizeof(int)
 
-![](RackMultipart20221017-1-nh7glv_html_3d24d93fa3af1360.png)
+![](/images/mtg_rep_buf.png)
 
 **JNI Functions**
 
-- Defined in system5\_msg.c
-- Accessed via Java calls in MessageJNI.java
-- Examples for using edu/cs300/MessageJNI.java:22 and edu/cs300/MessageJNI.java:23
-- System generated header file for system5\_msg is autogenerated from MessageJNI.java
+- Defined in `system5\_msg.c`
+- Accessed via Java calls in `MessageJNI.java`
+- Examples for using `edu/cs300/MessageJNI.java:22` and `edu/cs300/MessageJNI.java:23`
+- System generated header file for `system5\_msg` is autogenerated from `MessageJNI.java`
 
 **Other criteria**
 
@@ -242,7 +239,7 @@ Input piped to stdin to request_mtgs
 - Minimize use of global variables (don't use as a mechanism to avoid passing parameters)
 - Free any allocated memory; join any threads
 - Do not remove IPC queue when done
-- Message queue key FILE\_IN\_HOME\_DIRshould be a file in your home directory
+- Message queue key FILE\_IN\_HOME\_DIR should be a file in your home directory
 - Programs should be coded in C language (C99 standard) and will be compiled and tested on cs-operatingsystems01.ua.edu. If you choose to program on another system, give yourself enough time verify it works on cs-operatingsystems01.ua.edu. No other system will be used to test your code. May need \_GNU\_SOURCE switch.
 - You should use the pthreads library for threading. You can use mutexes or condition variables from the pthreads library and/or semaphores from the posix library.
 - Appropriate data structures should be selected based on your knowledge of data structures (CS201, etc).
