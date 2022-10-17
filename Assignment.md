@@ -29,7 +29,7 @@ You will complete a multithreaded two process system that communicates via Syste
 - Must respond to SIGINT with number of outstanding requests
 - The last message received from stdin will have a request id of zero. This request indicates the end of the input. Once all the previous requests have been sent, processed and replies received and printed, the request\_mtgs should exit.
 
-**Format:**./message\_request\_processor
+**Format:** `./request_mtgs`
 
 ```
 anderson@cs-operatingsystems01.ua.edu ~% cat input
@@ -39,7 +39,7 @@ anderson@cs-operatingsystems01.ua.edu ~% cat input
 ```
 
 ```
-anderson@cs-operatingsystems01.ua.edu ~% ./request\_mtgs \< input
+anderson@cs-operatingsystems01.ua.edu ~% ./request_mtgs < input
 Meeting request 1 for employee 1234 was accepted (morning mtg @ conf room starting 2022-12-17T14:30 for 60 minutes
 Meeting request 2 for employee 1234 was rejected due to conflict (conflict mtg @ zoom starting 2022-12-17T15:00 for 60 minutes
 ```
@@ -72,7 +72,7 @@ anderson@cs-operatingsystems01.ua.edu: java -cp . -Djava.library.path=. edu.cs30
 - Written in Java with the main function in `edu.cs300.CalendarManager.java`
 - Read employee information from `employees.csv` in java root directory (hardcode the name-`employees.csv` with no path)
 - Read contents of each employee's calendar file in the root directory (see sample files)
-  - Comma delimited record format: `employee\_id,calendar\_filename,employee name`
+  - Comma delimited record format: `employee_id,calendar_filename,employee name`
   - When ***CalendarManager*** exits, backup the contents of each employee's calendar file to the calendar filename+".bak". Contents should be sorted in event start order. Overwrite any previous backup file
 
 - All employees that receive meeting requests messages will have a record in employees.csv. The calendar file (via the name in the `employees.csv`) will exist but may be empty
@@ -134,63 +134,13 @@ Input piped to stdin to request_mtgs
 (see https://github.com/monicadelaine/f22_os_project/blob/master/msgsnd_mtg_request.c for an example)
 
 ```
-#define FILE\_IN\_HOME\_DIR"/home/anderson/anderson"
-#define QUEUE\_NUMBER 12 //day of birth
+#define FILE_IN_HOME_DIR"/home/anderson/anderson"
+#define QUEUE_NUMBER 12 //day of birth
 ```
 
 - Place files in the directory structure below (matches sample github). Turn in a zip or tar file named files.tar, files.tar.gz or files.zip that contains only the edu/cs300 directory. All other files are in the root. The project will be tested via a script. Not following this format breaks the script and will cause your project test to fail.
 
 ![](/images/project_folder.png)
-
-```
-├── _employees.csv
-
-├── _1234.dat
-
-├── _5678.dat
-
-├── _edu_cs300_MessageJNI.h
-
-├── _queue_ids.h
-
-├── _meeting_request_formats.h
-
-├── _request_mtgs.c
-
-├── _system5_msg.c
-
-├── _msgrcv_mtg_response.c
-
-├── _msgsnd_mtg_request.c
-
-├── _<Additional supporting C files>.c
-
-├── _<Additional supporting header files>.h
-
-├── _src
-
-| └── edu
-
-|  └── cs300
-
-|    └── MeetingRequest.java
-
-|    └── MeetingResponse.java
-
-|    └── MessageJNI.java
-
-|    └── CalendarManager.java
-
-|    └── Worker.java
-
-|    └── DebugLog.java
-
-|    └── <Additional Supporting Java Source>.java
-
-|── _makefile //update make file if needed with extra *.c or *.h in root or *java in edu/cs300
-
-└── _README.md
-```
 
 
 **meeting\_request\_formats.h notes**
@@ -206,29 +156,29 @@ Input piped to stdin to request_mtgs
 
 **Sending meeting request from ./msgsnd to JNI**
 
-- Message struct for sending in `msgsnd\_mtg\_request.c:47` and received in `system5msg.c:115` called from called from `java\_edu\_cs300\_MessageJNI.readMeetingRequest`
-- Type should be set ***2*** for sending `msgsnd\_mtg\_request.c:66`
-- Receive message of type ***2*** using `msgrcv(msqid, &rbuf, SEND\_BUFFER\_LENGTH
+- Message struct for sending in `msgsnd_mtg_request.c:47` and received in `system5msg.c:115` called from called from `java_edu_cs300_MessageJNI.readMeetingRequest`
+- Type should be set ***2*** for sending `msgsnd_mtg_request.c:66`
+- Receive message of type ***2*** using `msgrcv(msqid, &rbuf, SEND_BUFFER_LENGTH
 - , ***2*** , 0)` in `system5msg.c:143`
-- Record length determined by message\_request\_buf size (see calculation of SEND\_BUFFER\_LENGTH)
+- Record length determined by `message_request_buf` size (see calculation of `SEND_BUFFER_LENGTH`)
 
 ![](/images/mtg_req_buf.png)
 
 **Sending meeting response from JNI to ./msgrcv**
 
-- Message struct for sending in `system5\_msg.c:59` called from java `edu/cs300/MessageJNI.writeMeetingResponse()` and receiving in `msgrcv\_mtg\_response.c:16`
-- Type should be set ***1*** for sending at `system5\_msg.c:82`
-- Receive message of type ***1*** using `msgrcv(msqid, &rbuf, length, ***1***, 0)` in `msgrcv\_mtg\_response.c:37`
+- Message struct for sending in `system5_msg.c:59` called from java `edu/cs300/MessageJNI.writeMeetingResponse()` and receiving in `msgrcv_mtg_response.c:16`
+- Type should be set ***1*** for sending at `system5_msg.c:82`
+- Receive message of type ***1*** using `msgrcv(msqid, &rbuf, length, ***1***, 0)` in `msgrcv_mtg_response.c:37`
 - Record length: 2 \* sizeof(int)
 
 ![](/images/mtg_rep_buf.png)
 
 **JNI Functions**
 
-- Defined in `system5\_msg.c`
+- Defined in `system5_msg.c`
 - Accessed via Java calls in `MessageJNI.java`
 - Examples for using `edu/cs300/MessageJNI.java:22` and `edu/cs300/MessageJNI.java:23`
-- System generated header file for `system5\_msg` is autogenerated from `MessageJNI.java`
+- System generated header file for `system5_msg` is autogenerated from `MessageJNI.java`
 
 **Other criteria**
 
@@ -257,9 +207,11 @@ _Failure to follow directions will result in point deductions. There are 75 stud
 
 This is an individual assignment.  The program must represent your own work. You can discuss high-level concepts. Do not show your code to anyone. I reserve the right to ask you about your program to discern if you indeed wrote the code. If you cannot explain your code and choices verbally, you may be turned in for academic misconduct. All submissions will be analyzed to identify possible cases of cheating.  Any cases of suspected collaboration will be referred to the College of Engineering Dean.  A zero or low grade is always better than having an academic misconduct on your academic record.
 
-\*\* Programs will be evaluated based on many functional and design criteria \*\*
 
-Sample criteria include:
+**Grading**
+_Programs will be evaluated based on many functional and design criteria_
+
+***Sample criteria include:***
 
 70% - functionality
 
@@ -284,20 +236,4 @@ Sample criteria include:
 - Program must include reasonable whitespace and appropriate indentation
 - Program must include comments, especially in areas where you need to support your choices or where the purpose of the code is unclear.
 
-\*\* Clarifications on the assignment will be posted to blackboard.
-
-.
-
-Customer.csv (comma delimited)
-
-Employee id, calendar file name,employee name
-
-Calendar files
-
-"meeting description","location",2022-09-12,06:30,90
-
-YYYY-mm-dd
-
-24-hour time all central HH:MM
-
-Length in minutes
+**Clarifications on the assignment will be posted to blackboard or github as appropriate**
