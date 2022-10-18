@@ -50,14 +50,14 @@ The ***CalendarManager*** be responsible for maintaining the current calendar. E
 
 The ***CalendarManager*** will create the following threads:
 
-1. A Worker thread will be created for each employee that
+1. A Worker thread will be created for each employee that is listed in the employees.csv
   1. Reads the existing calendar from a file (denoted in the employees.csv) concurrently. Each line represents an accepted meeting,
   2. Reads a queue to receive meeting requests from the incoming meeting request thread
   3. Processes meeting requests concurrently via a queue,
   4. Pushes meeting responses to an outgoing meeting response thread (a meeting conflicts if it overlaps another meeting),
-  5. Backs up the current calendar file and exists when the terminate message (`request\_id==0`) is received
-2. An ***incoming meeting request*** thread that reads the meeting requests from the System V queue and pushes messages to concurrent retrieves each meeting request from the System V ipc queue using a Java Native Call and sends the requests to the appropriate worker for each employee. This thread exits when all requests have been processed
-3. An ***outgoing meeting response thread*** that retrieves every response message (from all Workers) and sends it to the ***request\_mtgs*** via the System V queue. This thread exits once all responses have been processed
+  5. Backs up the current calendar file and exits when the terminate message (`request_id==0`) is received
+2. An ***incoming meeting request*** thread that reads the meeting requests from the System V queue using a Java Native Call Interface in MessageJNI.readMeetingRequest() and sends the requests to the appropriate worker for each employee. This thread exits when all requests have been processed (receives a message with request ID of 0)
+3. An ***outgoing meeting response thread*** that retrieves every response message (from all Workers) and sends it to the ***request_mtgs*** via the System V queue using MessageJNI.writeMtgReqResponse(). This thread exits once all responses have been processed (triggered by upline message received with request_id of 0)
 
 The incoming meeting request thread and the outgoing meeting response thread are the only threads to access the System V queue, avoiding any synchronization issues with the Java Native Interface.
 
@@ -73,12 +73,11 @@ anderson@cs-operatingsystems01.ua.edu: java -cp . -Djava.library.path=. edu.cs30
 - Read employee information from `employees.csv` in java root directory (hardcode the name-`employees.csv` with no path)
 - Read contents of each employee's calendar file in the root directory (see sample files)
   - Comma delimited record format: `employee_id,calendar_filename,employee name`
-  - When ***CalendarManager*** exits, backup the contents of each employee's calendar file to the calendar filename+".bak". Contents should be sorted in event start order. Overwrite any previous backup file
-
+  - When ***CalendarManager*** exits, backup the contents of each employee's calendar file to the calendar filename+".bak". Contents should be sorted in event start order. Overwrite any previous backup file.
 - All employees that receive meeting requests messages will have a record in employees.csv. The calendar file (via the name in the `employees.csv`) will exist but may be empty
 - Requests for one employee should process concurrently with the requests from other employees and should write the backup files concurrently
-- A single thread should be used to call `MessageJNI.writeMtgReqResponse` methods to send messages back to the ***request\_mtgs*** (see OutputQueueProcessor class in `CalendarManager.java`)
-- A single thread should be used to retrieve messages using the MessageJNI._readMeetingRequest_ (see InputQueueProcessor class in `CalendarManager.java`)
+- A single thread should be used to call `MessageJNI.writeMtgReqResponse` methods to send messages back to the ***request_mtgs*** (see OutputQueueProcessor class in `CalendarManager.java`)
+- A single thread should be used to retrieve messages using the `MessageJNI.readMeetingRequest` (see InputQueueProcessor class in `CalendarManager.java`)
 
 **Sample data files:**
 
