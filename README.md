@@ -74,13 +74,13 @@ Run in two windows
 
 Window 1 - send and receive messages from C program
 
-`% ./msgsnd 0 "1234" "command line mtg" "online" "2022-12-17T14:30" 60`
+`./msgsnd 0 "1234" "command line mtg" "online" "2022-12-17T14:30" 60`
 ```
 msgget: msgget succeeded: msgqid = 524288
 msgsnd--mtg_req: reqid 0 empid 1234 descr command line mtg loc online date 2022-12-17T14:30 duration 60
 ```
 
-`% ./msgrcv`
+`./msgrcv`
 ```
 msgget: msgget succeeded: msgqid = 524288
 msgrcv-mtgReqResponse: request id 0  avail 1:

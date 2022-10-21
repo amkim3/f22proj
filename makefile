@@ -36,6 +36,9 @@ classes: $(CLASSES:.java=.class)
 
 all: edu_cs300_MessageJNI.h request_mtgs $(SHARED_LIB) classes msgsnd msgrcv
 
+archive: 
+	tar -cvzf files.tar.gz  makefile *.c *.h src/* pom.xml *.csv *.dat *msg 
+
 edu_cs300_MessageJNI.h: $(JAVA_SRC_ROOT)/$(JAVA_PKG)/MessageJNI.java
 	javac -cp $(JAVA_SRC_ROOT)/ -h . $(JAVA_SRC_ROOT)/$(JAVA_PKG)/MessageJNI.java
     
@@ -62,7 +65,7 @@ msgrcv: msgrcv_mtg_response.c meeting_request_formats.h queue_ids.h
 
 
 clean :
-	rm *.o $(SHARED_LIB) request_mtgs edu_cs300_MessageJNI.h msgsnd msgrcv
+	rm *.o $(SHARED_LIB) request_mtgs edu_cs300_MessageJNI.h msgsnd msgrcv files.tar.gz
 	$(call cleanfn)
 	ipcs -q|grep ${USER}|while read line; do id=`echo $$line|cut -d' ' -f3`; echo $$id; ipcrm -Q $$id;done
 

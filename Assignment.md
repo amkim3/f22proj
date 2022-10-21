@@ -61,10 +61,10 @@ The ***CalendarManager*** will create the following threads:
 
 The incoming meeting request thread and the outgoing meeting response thread are the only threads to access the System V queue, avoiding any synchronization issues with the Java Native Interface.
 
-**Format:** `java -cp . -Djava.library.path=. edu.cs300.CalandarManager`
+**Format:** `java -cp ./target/classes  -Djava.library.path=. edu/cs300/CalendarManager`
 
 ```
-anderson@cs-operatingsystems01.ua.edu: java -cp . -Djava.library.path=. edu.cs300.CalandarManager
+anderson@cs-operatingsystems01.ua.edu: java -cp ./target/classes  -Djava.library.path=. edu/cs300/CalendarManager
 ```
 
 **CalendarManager** requirements
@@ -138,7 +138,7 @@ Input piped to stdin to request_mtgs
 #define QUEUE_NUMBER 12 //day of birth
 ```
 
-- Place files in the directory structure below (matches sample github). Turn in a zip or tar file named files.tar, files.tar.gz or files.zip that contains only the edu/cs300 directory. All other files are in the root. The project will be tested via a script. Not following this format breaks the script and will cause your project test to fail.
+- Place files in the directory structure below (matches sample github). Use `make archive` to create the file to turn in. Turn the created file files.tar.gz.  The project will be tested via a script. Not using the make archive breaks the script and will cause your project test to fail.
 
 ![](/images/project_folder.png)
 
@@ -208,7 +208,7 @@ _Failure to follow directions will result in point deductions. There are 75 stud
 This is an individual assignment.  The program must represent your own work. You can discuss high-level concepts. Do not show your code to anyone. I reserve the right to ask you about your program to discern if you indeed wrote the code. If you cannot explain your code and choices verbally, you may be turned in for academic misconduct. All submissions will be analyzed to identify possible cases of cheating.  Any cases of suspected collaboration will be referred to the College of Engineering Dean.  A zero or low grade is always better than having an academic misconduct on your academic record.
 
 
-**Grading**
+
 _Programs will be evaluated based on many functional and design criteria_
 
 ***Sample criteria include:***
