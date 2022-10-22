@@ -29,12 +29,17 @@ endif
 all:
 	@echo $(OSFLAG)
 
-.SUFFIXES: .java .class
 
-classes: $(CLASSES:.java=.class)
-		$(call buildfn)
+%.class: %.java
+	javac -d $(CLASS_PATH) -classpath $(CLASS_PATH) $(JAVA_PKG)/*.java
 
-all: edu_cs300_MessageJNI.h request_mtgs $(SHARED_LIB) classes msgsnd msgrcv
+CLASSES = \
+	$(JAVA_SRC_ROOT)/$(JAVA_PKG)/CalendarManager.java \
+	$(JAVA_SRC_ROOT)/$(JAVA_PKG)/Worker.java \
+        $(JAVA_SRC_ROOT)/$(JAVA_PKG)/MessageJNI.java \
+	$(JAVA_SRC_ROOT)/$(JAVA_PKG)/DebugLog.java 
+
+all: edu_cs300_MessageJNI.h request_mtgs $(SHARED_LIB) $(CLASSES) msgsnd msgrcv
 
 archive: 
 	tar -cvzf files.tar.gz  makefile *.c *.h src/* pom.xml *.csv *.dat *msg 
@@ -66,6 +71,6 @@ msgrcv: msgrcv_mtg_response.c meeting_request_formats.h queue_ids.h
 
 clean :
 	rm *.o $(SHARED_LIB) request_mtgs edu_cs300_MessageJNI.h msgsnd msgrcv files.tar.gz
-	$(call cleanfn)
+	rm ${CLASS_PATH}/edu/cs300/*class
 	ipcs -q|grep ${USER}|while read line; do id=`echo $$line|cut -d' ' -f3`; echo $$id; ipcrm -Q $$id;done
 
