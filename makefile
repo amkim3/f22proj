@@ -27,7 +27,6 @@ endif
 
 SUFFIXES:.java.class
 
-
 all:
 	@echo $(OSFLAG)
 
@@ -38,18 +37,19 @@ all:
 CLASSES = \
 	$(JAVA_SRC_ROOT)/$(JAVA_PKG)/CalendarManager.java \
 	$(JAVA_SRC_ROOT)/$(JAVA_PKG)/Worker.java \
-        $(JAVA_SRC_ROOT)/$(JAVA_PKG)/MessageJNI.java \
+    $(JAVA_SRC_ROOT)/$(JAVA_PKG)/MessageJNI.java \
 	$(JAVA_SRC_ROOT)/$(JAVA_PKG)/DebugLog.java 
 
-all: edu_cs300_MessageJNI.h request_mtgs $(SHARED_LIB) classes  msgsnd msgrcv
+all: edu_cs300_MessageJNI.h request_mtgs $(SHARED_LIB) $(CLASSES)  msgsnd msgrcv
 
 classes:$(CLASSES:.java=.class)
 
 archive: 
-	tar -cvzf files.tar.gz  makefile *.c *.h src/* pom.xml *.csv *.dat *msg 
+	make clean
+	tar -cvzf cs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-projectcs300-project.tar.gz  makefile *.c *.h src/* pom.xml *.csv *.dat *msg 
 
 edu_cs300_MessageJNI.h: $(JAVA_SRC_ROOT)/$(JAVA_PKG)/MessageJNI.java
-	javac -cp $(JAVA_SRC_ROOT)/ -h . $(JAVA_SRC_ROOT)/$(JAVA_PKG)/MessageJNI.java
+	javac -cp ${CLASS_PATH}/ -h . $(JAVA_SRC_ROOT)/$(JAVA_PKG)/MessageJNI.java
     
 request_mtgs: request_mtgs.c meeting_request_formats.h
 	gcc -std=c99 -lpthread -D_GNU_SOURCE $(MAC_FLAG) request_mtgs.c -o request_mtgs
@@ -74,7 +74,7 @@ msgrcv: msgrcv_mtg_response.c meeting_request_formats.h queue_ids.h
 
 
 clean :
-	@rm *.o $(SHARED_LIB) request_mtgs edu_cs300_MessageJNI.h msgsnd msgrcv files.tar.gz
-	@rm ${CLASS_PATH}/edu/cs300/*class
+	@rm -f *.o $(SHARED_LIB) request_mtgs edu_cs300_MessageJNI.h msgsnd msgrcv files.tar.gz
+	@rm -f ${CLASS_PATH}/edu/cs300/*class
 	@ipcs -q|grep ${USER}|while read line; do id=`echo $$line|cut -d' ' -f3`; echo $$id; ipcrm -Q $$id;done
 

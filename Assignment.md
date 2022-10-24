@@ -33,9 +33,9 @@ You will complete a multithreaded two process system that communicates via Syste
 
 ```
 anderson@cs-operatingsystems01.ua.edu ~% cat input
-1,"1234","morning mtg","conf room",2022-12-17T14:30,60
-2,"1234","conflict mtg","zoom",2022-12-17T15:00,60
-0,"any","any","any",any,60
+1,1234,"morning mtg","conf room",2022-12-17T14:30,60
+2,1234,"conflict mtg","zoom",2022-12-17T15:00,60
+0,9999,"any","any",any,60
 ```
 
 ```
@@ -118,9 +118,9 @@ employees.csv
 Input piped to stdin to request_mtgs
 
 ```
-1,"1234","morning mtg","conf room",2022-12-17T14:30,60
-1,"1234","conflict mtg","zoom",2022-12-17T15:00,60
-0,"any","any","any",any,60
+1,1234,"morning mtg","conf room",2022-12-17T14:30,60
+1,1234,"conflict mtg","zoom",2022-12-17T15:00,60
+0,9999,"any","any",any,60
 ```
 
 **Additional project code specifications**
@@ -137,7 +137,7 @@ Input piped to stdin to request_mtgs
 #define QUEUE_NUMBER 12 //day of birth
 ```
 
-- Place files in the directory structure below (matches sample github). Use `make archive` to create the file to turn in. Turn the created file files.tar.gz.  The project will be tested via a script. Not using the make archive breaks the script and will cause your project test to fail.
+- Place files in the directory structure below (matches sample github). Use `make archive` to create the file to turn in. Turn the created file cs300-project.tar.gz.  The project will be tested via a script. Not using the make archive breaks the script and will cause your project test to fail.
 
 ![](/images/project_folder.png)
 
