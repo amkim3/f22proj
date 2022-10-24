@@ -4,25 +4,19 @@ JAVA_HOME=/usr/java/latest
 JAVA_PKG=edu/cs300
 JAVA_SRC_ROOT=.
 
-define buildfn
-    mvn clean package
-endef
-
-define cleanfn
-    mvn clean
-endef
-
 UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S),Linux)
 	OSFLAG := linux
 	SHARED_LIB := libsystem5msg.so
 	LINK_FLAGS := -shared
+	Q_COL := 1
 endif
 ifeq ($(UNAME_S),Darwin)
 	JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk-18.0.1.1.jdk/Contents/Home
 	OSFLAG := darwin
 	SHARED_LIB := libsystem5msg.dylib
 	LINK_FLAGS := -dynamiclib
+	Q_COL := 3
 endif
 
 .SUFFIXES: .java .class
@@ -49,7 +43,7 @@ classes: $(CLASSES:.java=.class)
 
 archive: 
 	make clean
-	tar -cvzf cs300-project.tar.gz  makefile *.c *.h src/* pom.xml *.csv *.dat *msg 
+	tar -cvzf ${USER}-f22os.tar.gz  makefile *.c *.h edu/cs300/*.java pom.xml *.csv *.dat *msg 
 
 edu_cs300_MessageJNI.h: ./$(JAVA_SRC_ROOT)/$(JAVA_PKG)/MessageJNI.java
 	javac -cp ${CLASS_PATH}/ -h . $(JAVA_SRC_ROOT)/$(JAVA_PKG)/MessageJNI.java
@@ -77,9 +71,10 @@ msgrcv: msgrcv_mtg_response.c meeting_request_formats.h queue_ids.h
 
 
 clean :
-	@rm -f *.o $(SHARED_LIB) request_mtgs edu_cs300_MessageJNI.h msgsnd msgrcv files.tar.gz
+	@rm -f *.o $(SHARED_LIB) request_mtgs edu_cs300_MessageJNI.h msgsnd msgrcv 
+	@rm -f ${USER}-f22os.tar.gz
 	@rm -f ${CLASS_PATH}/edu/cs300/*class
 
 clean_queues:
-	@ipcs -q|grep ${USER}|while read line; do id=`echo $$line|cut -d' ' -f3`; echo $$id; ipcrm -Q $$id;done
+	@ipcs -q|grep ${USER}|while read line; do id=`echo $$line|cut -d' ' -f${Q_COL}`; echo $$id; ipcrm -Q $$id;done
 

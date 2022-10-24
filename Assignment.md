@@ -8,15 +8,16 @@
 
 **Overview**
 
-You will complete a multithreaded two process system that communicates via System V message queues. The system goal is that meeting requests received by the ***request\_mtgs*** program are sent to the java program ***CalendarManager*** via the System 5 queue. The ***CalendarManager*** loads each employee's calendars at the start of the program, updates calendars with meetings that can be accommodated, sends back conflict/added responses to ***request\_mtgs*** program and backs up each employee's calendar when the program exits.
+You will complete a multithreaded two process system that communicates via System V message queues. The system goal is that meeting requests received by the **request\_mtgs** program are sent to the java program **CalendarManager** via the System 5 queue. The **CalendarManager** loads each employee's calendars at the start of the program, updates calendars with meetings that can be accommodated, sends back conflict/added responses to **request\_mtgs** program and backs up each employee's calendar when the program exits.
 
 **request\_mtgs Logic**
 
-***request\_mtgs*** reads meeting requests from stdin for employees. Each request is checked against an employee's existing schedule for conflicts by sending the request to the ***CalendarManager*** program via the System V queue. The ***CalendarManager*** will respond with a message that indicates whether the meeting was added to the calendar by indicating availability (availability of 0 means conflict, availability of 1 means added). The ***request\_mtgs*** will print out the result (conflict or added) of each meeting request.
+**request\_mtgs** reads meeting requests from stdin for employees. Each request is checked against an employee's existing schedule for conflicts by sending the request to the **CalendarManager** program via the System V queue. The **CalendarManager** will respond with a message that indicates whether the meeting was added to the calendar by indicating availability (availability of 0 means conflict, availability of 1 means added). The **request\_mtgs** will print out the result (conflict or added) of each meeting request.
 
 **request\_mtgs requirements**
 
 - Must be written in C. Source file containing main function is request\_mtgs.c. Any additional source files must be compiled and linked in the makefile
+- Do not use msgrcv or msgsnd in your solution.  You should borrow logic for use in **request_mtgs**.  Do not use exec, system or any other process creation API.  You must use threads
 - Format for incoming meeting requests includes the following fields. The header file provides length constraints.
   - Request id: integer
   - Employee id: string
@@ -32,23 +33,23 @@ You will complete a multithreaded two process system that communicates via Syste
 **Format:** `./request_mtgs`
 
 ```
-anderson@cs-operatingsystems01.ua.edu ~% cat input
+anderson@cs-operatingsystems01.ua.edu ~% cat input.msg
 1,1234,"morning mtg","conf room",2022-12-17T14:30,60
 2,1234,"conflict mtg","zoom",2022-12-17T15:00,60
 0,9999,"any","any",any,60
 ```
 
 ```
-anderson@cs-operatingsystems01.ua.edu ~% ./request_mtgs < input
+anderson@cs-operatingsystems01.ua.edu ~% ./request_mtgs < input.msg
 Meeting request 1 for employee 1234 was accepted (morning mtg @ conf room starting 2022-12-17T14:30 for 60 minutes
 Meeting request 2 for employee 1234 was rejected due to conflict (conflict mtg @ zoom starting 2022-12-17T15:00 for 60 minutes
 ```
 
 **CalendarManager logic**
 
-The ***CalendarManager*** be responsible for maintaining the current calendar. Each employee's initial calendar will be loaded from a file. The ***CalendarManager*** will check each meeting request against an employees' existing calendar. A response message will be sent back via the System V queue with the request ID and the availability (1 if added, 0 if a conflict). When the ***CalendarManager*** receives a request with a request\_id of 0, the ***CalendarManager*** will backup each employee's calendar file, and complete all of the threads.
+The **CalendarManager** be responsible for maintaining the current calendar. Each employee's initial calendar will be loaded from a file. The **CalendarManager** will check each meeting request against an employees' existing calendar. A response message will be sent back via the System V queue with the request ID and the availability (1 if added, 0 if a conflict). When the **CalendarManager** receives a request with a **request\_id of 0**, the **CalendarManager** will backup each employee's calendar file, and complete all of the threads.
 
-The ***CalendarManager*** will create the following threads:
+The **CalendarManager** will create the following threads:
 
 1. A Worker thread will be created for each employee that is listed in the employees.csv
   1. Reads the existing calendar from a file (denoted in the employees.csv) concurrently. Each line represents an accepted meeting,
@@ -56,8 +57,8 @@ The ***CalendarManager*** will create the following threads:
   3. Processes meeting requests concurrently via a queue,
   4. Pushes meeting responses to an outgoing meeting response thread (a meeting conflicts if it overlaps another meeting),
   5. Backs up the current calendar file and exits when the terminate message (`request_id==0`) is received
-2. An ***incoming meeting request*** thread that reads the meeting requests from the System V queue using a Java Native Call Interface in MessageJNI.readMeetingRequest() and sends the requests to the appropriate worker for each employee. This thread exits when all requests have been processed (receives a message with request ID of 0)
-3. An ***outgoing meeting response thread*** that retrieves every response message (from all Workers) and sends it to the ***request_mtgs*** via the System V queue using MessageJNI.writeMtgReqResponse(). This thread exits once all responses have been processed (triggered by upline message received with request_id of 0)
+2. An **incoming meeting request (see InputQueueProcessor class in `CalendarManager.java`)** thread that reads the meeting requests from the System V queue using a Java Native Call Interface in MessageJNI.readMeetingRequest() and sends the requests to the appropriate worker for each employee. This thread exits when all requests have been processed (receives a message with request ID of 0)
+3. An **outgoing meeting response thread see OutputQueueProcessor class in `CalendarManager.java`** that retrieves every response message (from all Workers) and sends it to the **request_mtgs** via the System V queue using MessageJNI.writeMtgReqResponse(). This thread exits once all responses have been processed (triggered by upline message received with request_id of 0)
 
 The incoming meeting request thread and the outgoing meeting response thread are the only threads to access the System V queue, avoiding any synchronization issues with the Java Native Interface.
 
@@ -73,10 +74,10 @@ anderson@cs-operatingsystems01.ua.edu: java -cp ./target/classes  -Djava.library
 - Read employee information from `employees.csv` in java root directory (hardcode the name-`employees.csv` with no path)
 - Read contents of each employee's calendar file in the root directory (see sample files)
   - Comma delimited record format: `employee_id,calendar_filename,employee name`
-  - When ***CalendarManager*** exits, backup the contents of each employee's calendar file to the calendar filename+".bak". Contents should be sorted in event start order. Overwrite any previous backup file.
+  - When **CalendarManager** exits, backup the contents of each employee's calendar file to the calendar filename+".bak". Contents should be sorted in event start order. Overwrite any previous backup file.
 - All employees that receive meeting requests messages will have a record in employees.csv. The calendar file (via the name in the `employees.csv`) will exist but may be empty
 - Requests for one employee should process concurrently with the requests from other employees and should write the backup files concurrently
-- A single thread should be used to call `MessageJNI.writeMtgReqResponse` methods to send messages back to the ***request_mtgs*** (see OutputQueueProcessor class in `CalendarManager.java`)
+- A single thread should be used to call `MessageJNI.writeMtgReqResponse` methods to send messages back to the **request_mtgs** (see OutputQueueProcessor class in `CalendarManager.java`)
 - A single thread should be used to retrieve messages using the `MessageJNI.readMeetingRequest` (see InputQueueProcessor class in `CalendarManager.java`)
 
 **Sample data files:**
@@ -137,7 +138,7 @@ Input piped to stdin to request_mtgs
 #define QUEUE_NUMBER 12 //day of birth
 ```
 
-- Place files in the directory structure below (matches sample github). Use `make archive` to create the file to turn in. Turn the created file cs300-project.tar.gz.  The project will be tested via a script. Not using the make archive breaks the script and will cause your project test to fail.
+- Place files in the directory structure below (matches sample github). Use `make archive` to create a user specific file to turn in. Turn the created file **USERNAME-f22os.tar.gz**.  The project will be tested via a script. Not using the make archive breaks the script and will cause your project test to fail.
 
 ![](/images/project_folder.png)
 
@@ -210,7 +211,7 @@ This is an individual assignment.  The program must represent your own work. You
 
 _Programs will be evaluated based on many functional and design criteria_
 
-***Sample criteria include:***
+**Sample criteria include:**
 
 70% - functionality
 
