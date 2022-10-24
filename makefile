@@ -2,7 +2,7 @@
 CLASS_PATH = ./target/classes
 JAVA_HOME=/usr/java/latest
 JAVA_PKG=edu/cs300
-JAVA_SRC_ROOT=src
+JAVA_SRC_ROOT=./src
 
 define buildfn
     mvn clean package
@@ -25,13 +25,15 @@ ifeq ($(UNAME_S),Darwin)
 	LINK_FLAGS := -dynamiclib
 endif
 
+SUFFIXES:.java.class
+
 
 all:
 	@echo $(OSFLAG)
 
-
-%.class: %.java
-	javac -d $(CLASS_PATH) -classpath $(CLASS_PATH) $(JAVA_PKG)/*.java
+.java.class:
+	@mkdir -p $(CLASS_PATH)
+	javac -d $(CLASS_PATH) -classpath $(CLASS_PATH) $(JAVA_SRC_ROOT)/$(JAVA_PKG)/*.java
 
 CLASSES = \
 	$(JAVA_SRC_ROOT)/$(JAVA_PKG)/CalendarManager.java \
@@ -39,7 +41,9 @@ CLASSES = \
         $(JAVA_SRC_ROOT)/$(JAVA_PKG)/MessageJNI.java \
 	$(JAVA_SRC_ROOT)/$(JAVA_PKG)/DebugLog.java 
 
-all: edu_cs300_MessageJNI.h request_mtgs $(SHARED_LIB) $(CLASSES) msgsnd msgrcv
+all: edu_cs300_MessageJNI.h request_mtgs $(SHARED_LIB) classes  msgsnd msgrcv
+
+classes:$(CLASSES:.java=.class)
 
 archive: 
 	tar -cvzf files.tar.gz  makefile *.c *.h src/* pom.xml *.csv *.dat *msg 
@@ -56,7 +60,7 @@ edu_cs300_MessageJNI.o:meeting_request_formats.h edu_cs300_MessageJNI.h system5_
 $(SHARED_LIB):meeting_request_formats.h edu_cs300_MessageJNI.h edu_cs300_MessageJNI.o
 	gcc $(LINK_FLAGS) -o $(SHARED_LIB) edu_cs300_MessageJNI.o -lc
 
-test: msgsnd msgrcv classes $(SHARED_LIB)
+test: msgsnd msgrcv $(CLASSES) $(SHARED_LIB)
 	./msgsnd 1 "1234" "meeting for 1234" "online" "2022-12-17T14:30" 60
 	java -cp ${CLASS_PATH} -Djava.library.path=. edu/cs300/MessageJNI
 	./msgrcv
@@ -70,7 +74,7 @@ msgrcv: msgrcv_mtg_response.c meeting_request_formats.h queue_ids.h
 
 
 clean :
-	rm *.o $(SHARED_LIB) request_mtgs edu_cs300_MessageJNI.h msgsnd msgrcv files.tar.gz
-	rm ${CLASS_PATH}/edu/cs300/*class
-	ipcs -q|grep ${USER}|while read line; do id=`echo $$line|cut -d' ' -f3`; echo $$id; ipcrm -Q $$id;done
+	@rm *.o $(SHARED_LIB) request_mtgs edu_cs300_MessageJNI.h msgsnd msgrcv files.tar.gz
+	@rm ${CLASS_PATH}/edu/cs300/*class
+	@ipcs -q|grep ${USER}|while read line; do id=`echo $$line|cut -d' ' -f3`; echo $$id; ipcrm -Q $$id;done
 
