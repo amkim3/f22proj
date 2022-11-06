@@ -31,19 +31,19 @@ typedef struct {
 
 void* send_thread(void* arg){
     threadArg *args= (threadArg *)arg;
-    meeting_request_buf *rbuf= &(args->rbuf);  //rbuf
-    fprintf(stderr,"after lock send\n");
     //lock
     Pthread_mutex_lock(&sendLock);
     fprintf(stderr,"after lock\n");
+    meeting_request_buf test;
     if((msgsnd(msqid, &args->rbuf, SEND_BUFFER_LENGTH, IPC_NOWAIT)) < 0) {
         int errnum = errno;
+        fprintf(stderr,"yo\n");
         fprintf(stderr,"%d, %ld, %d, %ld\n", msqid, args->rbuf.mtype, args->rbuf.request_id, SEND_BUFFER_LENGTH);
         perror("(msgsnd)");
         fprintf(stderr, "Error sending msg: %s\n", strerror( errnum ));
         exit(1);
     }
-    fprintf(stderr,"after send");
+    fprintf(stderr,"after send\n");
     Pthread_mutex_unlock(&sendLock);
 
     fprintf(stderr,"after lock send\n");
@@ -123,6 +123,7 @@ int main(int argc, char *argv[]){
         if(charRead<=1) continue;
         char *save;
         char *str1=strtok_r(input, ",", &save);
+        argument->rbuf.mtype=2;   
         argument->rbuf.request_id=atoi(str1);
         str1=strtok_r(NULL, ",", &save);
         strncpy(argument->rbuf.empId,str1,EMP_ID_MAX_LENGTH);
@@ -150,10 +151,8 @@ int main(int argc, char *argv[]){
         n->avail = &argument->signal;
         root = bst(root, n);
         fixup(root, n);
-        fprintf(stderr,"before\n");
-        //fprintf(stderr,"%d %s %s %s %s %d",rbuf.request_id,rbuf.empId,rbuf.description_string,rbuf.location_string,rbuf.datetime,rbuf.duration);
-        Pthread_create(&threadArray[threadCount++], NULL, send_thread, NULL);
-        fprintf(stderr,"after\n");
+        //fprintf(stderr,"%d %s %s %s %s %d\n",argument->rbuf.request_id,argument->rbuf.empId,argument->rbuf.description_string,argument->rbuf.location_string,argument->rbuf.datetime,argument->rbuf.duration);
+        Pthread_create(&threadArray[threadCount++], NULL, send_thread, argument);
         if(argument->rbuf.request_id==0){
             break;
         }
