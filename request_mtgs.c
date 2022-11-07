@@ -17,8 +17,7 @@ int msgflg = IPC_CREAT | 0666;
 key_t key;
 
 pthread_mutex_t sendLock;
-// global root for the entire tree
-extern struct node* root;
+extern struct node* root; // Red-black-tree
 
 #define INPUT_MAX_L EMP_ID_MAX_LENGTH+DESCRIPTION_MAX_LENGTH+LOCATION_MAX_LENGTH+DATETIME_LENGTH+23
 
@@ -29,25 +28,19 @@ typedef struct {
     int signal;
 } threadArg;
 
+
 void* send_thread(void* arg){
     threadArg *args= (threadArg *)arg;
-    //lock
-    fprintf(stderr,"before lock\n");
     Pthread_mutex_lock(&sendLock);
-    fprintf(stderr,"after lock\n");
     meeting_request_buf test;
     if((msgsnd(msqid, &args->rbuf, SEND_BUFFER_LENGTH, IPC_NOWAIT)) < 0) {
         int errnum = errno;
-        fprintf(stderr,"yo\n");
         fprintf(stderr,"%d, %ld, %d, %ld\n", msqid, args->rbuf.mtype, args->rbuf.request_id, SEND_BUFFER_LENGTH);
         perror("(msgsnd)");
         fprintf(stderr, "Error sending msg: %s\n", strerror( errnum ));
         exit(1);
     }
-    fprintf(stderr,"after send\n");
     Pthread_mutex_unlock(&sendLock);
-
-    fprintf(stderr,"after lock send\n");
 
     Pthread_mutex_lock(&args->waitLock);
     while (args->signal < 0) {
@@ -56,43 +49,64 @@ void* send_thread(void* arg){
     int avail = args->signal;
     Pthread_mutex_unlock(&args->waitLock);
 
-    fprintf(stderr,"msgrcv-mtgReqResponse: request id %d  avail %d: \n",args->rbuf.request_id,avail);
+    if(avail==1){
+        fprintf(stdout, "Meeting request %d for employee %s was accepted (%s @ %s starting %s for %d minutes\n",
+         args->rbuf.request_id,args->rbuf.empId,args->rbuf.description_string,args->rbuf.location_string,args->rbuf.datetime,args->rbuf.duration);
+    }else{
+       fprintf(stdout, "Meeting request %d for employee %s rejected due to conflict (%s @ %s starting %s for %d minutes\n",
+         args->rbuf.request_id,args->rbuf.empId,args->rbuf.description_string,args->rbuf.location_string,args->rbuf.datetime,args->rbuf.duration); 
+    }
 
     Pthread_cond_destroy(&args->waitCond);
     Pthread_mutex_destroy(&args->waitLock);
-    // also decrease active threads
-
 }
 
 void* receive_response(void* arg) {
     int ret;
     meeting_response_buf rbuf;
-    do {
-      ret = msgrcv(msqid, &rbuf, sizeof(meeting_response_buf)-sizeof(long), 1, 0);//receive type 1 message
-      int errnum = errno;
-      if (ret < 0 && errno !=EINTR){
-        fprintf(stderr, "Value of errno: %d\n", errno);
-        perror("Error printed by perror");
-        fprintf(stderr, "Error receiving msg: %s\n", strerror( errnum ));
-      }
-    } while ((ret < 0 ) && (errno == 4));
-    fprintf(stderr, "Value received");
-    struct node* cur = root;
-    while (cur != NULL) {
-        if (cur->d > rbuf.request_id) {
-            cur = cur->r;
+    while (1) {
+        do {
+            ret = msgrcv(msqid, &rbuf, sizeof(rbuf)-sizeof(long), 1, 0);//receive type 1 message
+
+            int errnum = errno;
+            if (ret < 0 && errno !=EINTR){
+                fprintf(stderr, "Value of errno: %d\n", errno);
+                perror("Error printed by perror");
+                fprintf(stderr, "Error receiving msg: %s\n", strerror( errnum ));
+            }
+        } while ((ret < 0 ) && (errno == 4));
+        fprintf(stderr, "Value received\n");
+
+
+        struct node* cur = root;
+        while (cur != NULL) {
+            if (cur->d > rbuf.request_id) {
+                cur = cur->l;
+            }
+            else if (cur->d < rbuf.request_id) {
+                cur = cur->r; 
+            }else{
+                break;
+            }
         }
-        else if (cur->d < rbuf.request_id) {
-            cur = cur->l; 
+
+        if (cur != NULL) {
+            Pthread_mutex_lock(cur->mut);  
+            if(rbuf.avail==1){
+                *cur->avail=1;
+            }else if(rbuf.avail==0){
+                *cur->avail=0;
+            }
+            Pthread_cond_signal(cur->cond);
+            Pthread_mutex_unlock(cur->mut);
+        }else{
+            fprintf(stderr,"node not found");
         }
+
+        fprintf(stderr, "left");
     }
-    Pthread_mutex_lock(cur->mut);
-    *cur->avail = rbuf.avail;
-    Pthread_cond_signal(cur->cond);
-    Pthread_mutex_unlock(cur->mut);
+    
 }
-
-
 
 
 int main(int argc, char *argv[]){
@@ -104,8 +118,12 @@ int main(int argc, char *argv[]){
     }
 
     Pthread_mutex_init(&sendLock);
+
     pthread_t threadArray[200];
     int threadCount = 0;
+
+    pthread_t receiveThread;
+    Pthread_create(&receiveThread, NULL, receive_response, NULL);
 
     if ((msqid = msgget(key, msgflg)) < 0) {
         int errnum = errno;
@@ -119,6 +137,8 @@ int main(int argc, char *argv[]){
 
     for(;;){
         threadArg *argument = malloc(sizeof(threadArg));
+
+        // Get line, separate
         int charRead=getline(&input,&input_sz,stdin);
         if(charRead<=1) continue;
         char *save;
@@ -136,10 +156,13 @@ int main(int argc, char *argv[]){
         str1=strtok_r(NULL, ",", &save);
         argument->rbuf.duration=atoi(str1);
         
+        // Initialize condition variable and lock
         Pthread_cond_init(&argument->waitCond);
         Pthread_mutex_init(&argument->waitLock);
+        // Signal
         argument->signal=-1;
-        
+
+        // node for rbt
         struct node* n = (struct node*)malloc(sizeof(struct node));
         n->d = argument->rbuf.request_id;
         n->r = NULL;
@@ -151,10 +174,17 @@ int main(int argc, char *argv[]){
         n->avail = &argument->signal;
         root = bst(root, n);
         fixup(root, n);
-        //fprintf(stderr,"%d %s %s %s %s %d\n",argument->rbuf.request_id,argument->rbuf.empId,argument->rbuf.description_string,argument->rbuf.location_string,argument->rbuf.datetime,argument->rbuf.duration);
+        
+        if (argument->rbuf.request_id == 0) {
+            for(int i=0;i<threadCount;++i){
+                Pthread_join(threadArray[i],NULL);
+            }
+        }
+        fprintf(stderr,"%d %s %s %s %s %d\n",argument->rbuf.request_id,argument->rbuf.empId,argument->rbuf.description_string,argument->rbuf.location_string,argument->rbuf.datetime,argument->rbuf.duration);
         Pthread_create(&threadArray[threadCount++], NULL, send_thread, argument);
+
         if(argument->rbuf.request_id==0){
             break;
         }
-    }
+    }  
 }
