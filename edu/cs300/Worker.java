@@ -60,7 +60,7 @@ class Worker extends Thread {
                 if (mtgReq.request_id == 0) {
                     try {
                         File f = new File(empCalendar + ".bak");
-                        FileWriter fr = new FileWriter(f, true);
+                        FileWriter fr = new FileWriter(f);
                         BufferedWriter br = new BufferedWriter(fr);
                         for (Map.Entry<LocalDateTime, Meeting> entry : map.entrySet()) {
                             br.write(entry.getValue().description + "," + entry.getValue().location + "," + entry.getValue().datetime + "," + entry.getValue().duration + "\n");
