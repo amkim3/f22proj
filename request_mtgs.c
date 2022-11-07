@@ -32,6 +32,7 @@ typedef struct {
 void* send_thread(void* arg){
     threadArg *args= (threadArg *)arg;
     //lock
+    fprintf(stderr,"before lock\n");
     Pthread_mutex_lock(&sendLock);
     fprintf(stderr,"after lock\n");
     meeting_request_buf test;
@@ -49,13 +50,13 @@ void* send_thread(void* arg){
     fprintf(stderr,"after lock send\n");
 
     Pthread_mutex_lock(&args->waitLock);
-    while (args->signal == -1) {
-
+    while (args->signal < 0) {
         Pthread_cond_wait(&args->waitCond, &args->waitLock);
     }
+    int avail = args->signal;
     Pthread_mutex_unlock(&args->waitLock);
 
-    fprintf(stderr,"msgrcv-mtgReqResponse: request id %d  avail %d: \n",args->rbuf.request_id,args->signal);
+    fprintf(stderr,"msgrcv-mtgReqResponse: request id %d  avail %d: \n",args->rbuf.request_id,avail);
 
     Pthread_cond_destroy(&args->waitCond);
     Pthread_mutex_destroy(&args->waitLock);
@@ -67,8 +68,7 @@ void* receive_response(void* arg) {
     int ret;
     meeting_response_buf rbuf;
     do {
-      ret = msgrcv(msqid, &rbuf, sizeof(rbuf)-sizeof(long), 1, 0);//receive type 1 message
-
+      ret = msgrcv(msqid, &rbuf, sizeof(meeting_response_buf)-sizeof(long), 1, 0);//receive type 1 message
       int errnum = errno;
       if (ret < 0 && errno !=EINTR){
         fprintf(stderr, "Value of errno: %d\n", errno);
@@ -76,7 +76,7 @@ void* receive_response(void* arg) {
         fprintf(stderr, "Error receiving msg: %s\n", strerror( errnum ));
       }
     } while ((ret < 0 ) && (errno == 4));
-    
+    fprintf(stderr, "Value received");
     struct node* cur = root;
     while (cur != NULL) {
         if (cur->d > rbuf.request_id) {
