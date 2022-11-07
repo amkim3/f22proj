@@ -75,7 +75,7 @@ void* receive_response(void* arg) {
                 fprintf(stderr, "Error receiving msg: %s\n", strerror( errnum ));
             }
         } while ((ret < 0 ) && (errno == 4));
-        fprintf(stderr, "Value received\n");
+        // fprintf(stderr, "Value received\n");
 
 
         struct node* cur = root;
@@ -99,11 +99,7 @@ void* receive_response(void* arg) {
             }
             Pthread_cond_signal(cur->cond);
             Pthread_mutex_unlock(cur->mut);
-        }else{
-            fprintf(stderr,"node not found");
         }
-
-        fprintf(stderr, "left");
     }
     
 }
