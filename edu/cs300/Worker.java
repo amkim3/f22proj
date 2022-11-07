@@ -84,7 +84,7 @@ class Worker extends Thread {
                         }
                     }
                     if (map.ceilingKey(time) != null) {
-                        if (time.plusMinutes(mtgReq.duration).isAfter(map.ceilingKey(time).plusMinutes(map.ceilingEntry(time).getValue().duration))) {
+                        if (time.plusMinutes(mtgReq.duration).isAfter(map.ceilingKey(time))) {
                             valid = false;
                         }
                     }
